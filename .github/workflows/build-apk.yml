@@ -14,31 +14,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check repository
-        run: |
-          echo "Files found:"
-          ls -lh
-
       - name: Unpack V2 package
         run: |
-          echo "Using JARVIS V2..."
+          echo "Using JARVIS V2 package..."
           unzip -q JARVIS_GITHUB_PHONE_PACKAGE_V2.zip -d jarvis_package
 
-          echo "V2 package contents:"
-          find jarvis_package -maxdepth 3 -type f -print
+          echo "Package contents:"
+          find jarvis_package -maxdepth 2 -type f -print
 
-      - name: Find and unpack V2 Android source
+      - name: Unpack Android source
         run: |
-          SOURCE=$(find jarvis_package -type f -name 'JARVIS_MAX_ANDROID_SOURCE_V2.zip' | head -n 1)
+          SOURCE=$(find jarvis_package -type f -name 'JARVIS_MAX_ANDROID_SOURCE.zip' | head -n 1)
 
           if [ -z "$SOURCE" ]; then
-            echo "ERROR: JARVIS_MAX_ANDROID_SOURCE_V2.zip not found."
-            echo "Available ZIP files:"
-            find jarvis_package -type f -name '*.zip' -print
+            echo "ERROR: JARVIS_MAX_ANDROID_SOURCE.zip not found."
             exit 1
           fi
 
-          echo "Found V2 source: $SOURCE"
+          echo "Found source: $SOURCE"
 
           unzip -q "$SOURCE" -d buildsrc
 
