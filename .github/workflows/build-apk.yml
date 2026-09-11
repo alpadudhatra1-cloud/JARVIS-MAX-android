@@ -1,16 +1,54 @@
-- name: Find and unpack JARVIS project
-  run: |
-    echo "Files in repository:"
-    find . -maxdepth 2 -type f -print
-    ZIP=$(find . -maxdepth 2 -type f -iname '*JARVIS*ANDROID*SOURCE*.zip' | head -n 1)
+name: Build JARVIS APK
 
-    if [ -z "$ZIP" ]; then
-      echo "ERROR: JARVIS Android source ZIP was not found."
-      exit 1
-    fi
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-    echo "Found: $ZIP"
-    unzip -q "$ZIP" -d buildsrc
-    echo "PROJECT_DIR=$GITHUB_WORKSPACE/buildsrc/JARVIS_MAX_ANDROID" >> "$GITHUB_ENV"
-    
-          
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find JARVIS source ZIP
+        run: |
+          echo "Repository files:"
+          find . -maxdepth 2 -type f -print
+
+          ZIP=$(find . -maxdepth 2 -type f -iname '*ANDROID*SOURCE*.zip' | head -n 1)
+
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: Android source ZIP not found."
+            exit 1
+          fi
+
+          echo "Found ZIP: $ZIP"
+          unzip -q "$ZIP" -d buildsrc
+
+          echo "PROJECT_DIR=$GITHUB_WORKSPACE/buildsrc/JARVIS_MAX_ANDROID" >> "$GITHUB_ENV"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Build APK
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-debug-apk
+          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
