@@ -11,27 +11,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find JARVIS source ZIP
+      - name: Check repository
         run: |
-          echo "Repository files:"
-          find . -maxdepth 2 -type f -print
+          echo "Files found:"
+          ls -lh
 
-          ZIP=$(find . -maxdepth 2 -type f -iname '*ANDROID*SOURCE*.zip' | head -n 1)
+      - name: Unpack V2 package
+        run: |
+          echo "Using JARVIS V2..."
+          unzip -q JARVIS_GITHUB_PHONE_PACKAGE_V2.zip -d jarvis_package
 
-          if [ -z "$ZIP" ]; then
-            echo "ERROR: Android source ZIP not found."
+          echo "V2 package contents:"
+          find jarvis_package -maxdepth 3 -type f -print
+
+      - name: Find and unpack V2 Android source
+        run: |
+          SOURCE=$(find jarvis_package -type f -name 'JARVIS_MAX_ANDROID_SOURCE_V2.zip' | head -n 1)
+
+          if [ -z "$SOURCE" ]; then
+            echo "ERROR: JARVIS_MAX_ANDROID_SOURCE_V2.zip not found."
+            echo "Available ZIP files:"
+            find jarvis_package -type f -name '*.zip' -print
             exit 1
           fi
 
-          echo "Found ZIP: $ZIP"
-          unzip -q "$ZIP" -d buildsrc
+          echo "Found V2 source: $SOURCE"
+
+          unzip -q "$SOURCE" -d buildsrc
+
+          echo "Android project:"
+          find buildsrc/JARVIS_MAX_ANDROID -maxdepth 2 -type f -print
 
           echo "PROJECT_DIR=$GITHUB_WORKSPACE/buildsrc/JARVIS_MAX_ANDROID" >> "$GITHUB_ENV"
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -42,13 +58,15 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
-      - name: Build APK
+      - name: Build JARVIS MAX 2.0
         working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle assembleDebug --no-daemon
+        run: |
+          echo "Building JARVIS MAX 2.0..."
+          gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: jarvis-debug-apk
+          name: jarvis-max-2.0-apk
           path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
