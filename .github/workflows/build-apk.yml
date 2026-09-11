@@ -1,46 +1,16 @@
-name: Build JARVIS APK
+- name: Find and unpack JARVIS project
+  run: |
+    echo "Files in repository:"
+    find . -maxdepth 2 -type f -print
+    ZIP=$(find . -maxdepth 2 -type f -iname '*JARVIS*ANDROID*SOURCE*.zip' | head -n 1)
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+    if [ -z "$ZIP" ]; then
+      echo "ERROR: JARVIS Android source ZIP was not found."
+      exit 1
+    fi
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Unpack JARVIS project
-        run: |
-          unzip -q JARVIS_MAX_ANDROID_SOURCE.zip -d buildsrc
-          echo "PROJECT_DIR=$GITHUB_WORKSPACE/buildsrc/JARVIS_MAX_ANDROID" >> "$GITHUB_ENV"
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
-
-      - name: Build debug APK
-        working-directory: ${{ env.PROJECT_DIR }}
-        run: gradle assembleDebug --no-daemon
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v5
-        with:
-          name: jarvis-debug-apk
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+    echo "Found: $ZIP"
+    unzip -q "$ZIP" -d buildsrc
+    echo "PROJECT_DIR=$GITHUB_WORKSPACE/buildsrc/JARVIS_MAX_ANDROID" >> "$GITHUB_ENV"
+    
           
