@@ -25,17 +25,17 @@ jobs:
           unzip -q JARVIS_GITHUB_PHONE_PACKAGE_6_1.zip -d jarvis_package
 
       - name: Find and unpack Android source
-        run: |
-          SOURCE=$(find jarvis_package -type f -name 'JARVIS_MAX_ANDROID_SOURCE_6_1.zip' | head -n 1)
+       run: |
+       SOURCE=$(find jarvis_package -type f -name 'source.zip' | head -n 1)
 
-          if [ -z "$SOURCE" ]; then
-            echo "ERROR: JARVIS_MAX_ANDROID_SOURCE_6_1.zip not found."
-            find jarvis_package -type f -print
-            exit 1
-          fi
+    if [ -z "$SOURCE" ]; then
+      echo "ERROR: source.zip not found."
+      find jarvis_package -type f -print
+      exit 1
+    fi
 
-          echo "Found source: $SOURCE"
-          unzip -q "$SOURCE" -d buildsrc
+    echo "Found source: $SOURCE"
+    unzip -q "$SOURCE" -d buildsrc
 
           echo "Extracted project:"
           find buildsrc -maxdepth 3 -type f -print
@@ -52,7 +52,7 @@ jobs:
           gradle-version: '8.10.2'
 
       - name: Build JARVIS MAX 6.1
-        working-directory: buildsrc/JARVIS_MAX_ANDROID
+        path: buildsrc/JARVIS_MAX_ANDROID_6_1/app/build/outputs/apk/debug/app-debug.apk
         run: |
           gradle assembleDebug --no-daemon
 
